@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>valk - music producer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Font Awesome for social icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <!-- Google Fonts for aesthetic font -->
+    <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            color: #fff;
+            background: #111;
+            overflow-x: hidden;
+        }
+        #bg-video {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            object-fit: cover;
+            z-index: 0;
+            filter: grayscale(1) brightness(0.7) contrast(1.1);
+            pointer-events: none;
+        }
+        #starfield {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: 1;
+            pointer-events: none;
+            opacity: 0.18;
+        }
+        #glitch-canvas {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: 2;
+            pointer-events: none;
+            mix-blend-mode: lighten;
+            opacity: 0.32;
+        }
+        header {
+            text-align: center;
+            padding: 2rem 1rem 1rem 1rem;
+            user-select: none;
+            position: relative;
+            z-index: 3;
+        }
+        h1 {
+            margin: 0;
+            font-size: 2.8rem;
+            letter-spacing: 2px;
+            text-transform: lowercase;
+            font-weight: 700;
+            background: linear-gradient(90deg, #fff 30%, #bbb 70%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 2px 16px #fff2);
+            transition: transform 0.2s;
+            cursor: pointer;
+        }
+        h1:hover {
+            transform: scale(1.07) rotate(-2deg);
+            filter: drop-shadow(0 4px 32px #fff6);
+        }
+        .links {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+            flex-wrap: wrap;
+            z-index: 3;
+            position: relative;
+        }
+        .links a {
+            color: #fff;
+            text-decoration: none;
+            font-size: 2rem;
+            background: rgba(30,30,30,0.85);
+            padding: 0.6rem 1.2rem;
+            border-radius: 50%;
+            border: 2px solid #fff;
+            box-shadow: 0 2px 12px #fff2;
+            transition: 
+                background 0.2s, 
+                color 0.2s, 
+                transform 0.15s,
+                box-shadow 0.2s;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 56px;
+            height: 56px;
+        }
+        .links a:hover {
+            background: #fff;
+            color: #111;
+            transform: scale(1.13) translateY(-2px) rotate(-6deg);
+            box-shadow: 0 4px 24px #fff8;
+        }
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 2vw;
+            margin: 2rem 0 0 0;
+            position: relative;
+            z-index: 3;
+            min-height: 60vh;
+        }
+        .visual-side {
+            display: none;
+        }
+        .song-section {
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+            margin: 0;
+            position: relative;
+            z-index: 3;
+        }
+        .song-section iframe {
+            width: 90vw;
+            max-width: 560px;
+            height: 315px;
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 4px 32px #fff2;
+            transition: box-shadow 0.2s, transform 0.2s;
+            filter: grayscale(1) contrast(1.1);
+            margin: 0 auto;
+            display: block;
+        }
+        .song-section iframe:hover {
+            box-shadow: 0 8px 48px #fff8;
+            transform: scale(1.02);
+        }
+        .song-section h2 {
+            text-transform: lowercase;
+            letter-spacing: 1px;
+            font-weight: 500;
+            margin-bottom: 1rem;
+            color: #fff;
+            text-shadow: 0 2px 8px #111a;
+        }
+        .song-section a {
+            color: #fff;
+            font-weight: 600;
+            text-decoration: underline;
+            transition: color 0.2s;
+        }
+        .song-section a:hover {
+            color: #bbb;
+        }
+        /* Scroll effect overlay */
+        #scroll-valk {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.6s cubic-bezier(.77,0,.18,1);
+        }
+        #scroll-valk.visible {
+            opacity: 1;
+        }
+        #scroll-valk-text {
+            font-family: 'Unbounded', 'Segoe UI', Arial, sans-serif;
+            font-size: 10vw;
+            color: #fff;
+            letter-spacing: 0.1em;
+            text-transform: lowercase;
+            text-shadow: 0 4px 64px #fff8, 0 1px 0 #000a;
+            filter: blur(0.5px) brightness(1.2) contrast(1.1);
+            font-weight: 700;
+            user-select: none;
+            transition: transform 0.5s cubic-bezier(.77,0,.18,1);
+            transform: scale(1) rotate(-2deg);
+        }
+        @media (max-width: 900px) {
+            .main-content {
+                margin-top: 1rem;
+            }
+            #scroll-valk-text {
+                font-size: 16vw;
+            }
+        }
+        @media (max-width: 600px) {
+            h1 { font-size: 1.5rem; }
+            .links a { font-size: 1.3rem; width: 38px; height: 38px; padding: 0.3rem 0.3rem;}
+            .song-section iframe { height: 200px; }
+            #scroll-valk-text { font-size: 22vw; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Space/black hole video background (replace src with your own for best effect) -->
+    <video id="bg-video" autoplay loop muted playsinline></video>
+    <canvas id="starfield"></canvas>
+    <canvas id="glitch-canvas"></canvas>
+    <div id="scroll-valk">
+        <span id="scroll-valk-text">valk</span>
+    </div>
+    <header>
+        <h1 id="valk-title">valk</h1>
+        <p>music producer</p>
+        <div class="links">
+            <a href="https://www.youtube.com/@listeningvalk" target="_blank" title="YouTube">
+                <i class="fab fa-youtube"></i>
+            </a>
+            <a href="https://soundcloud.com/gotnoprice" target="_blank" title="SoundCloud">
+                <i class="fab fa-soundcloud"></i>
+            </a>
+            <a href="https://www.instagram.com/valk.wav/" target="_blank" title="Instagram">
+                <i class="fab fa-instagram"></i>
+            </a>
+        </div>
+    </header>
+    <div class="main-content">
+        <section class="song-section">
+            <h2>latest release</h2>
+            <iframe src="https://www.youtube.com/embed/naXWB9S7GDE" allowfullscreen></iframe>
+            <p>
+                <a href="https://youtu.be/naXWB9S7GDE?si=V_NFRfIuJ2EmY7Yh" target="_blank">listen on youtube</a>
+            </p>
+        </section>
+    </div>
+    <script>
+        // Set a space/black hole video background (royalty free, replace with your own if needed)
+        const bgVideo = document.getElementById('bg-video');
+        bgVideo.src = "https://cdn.pixabay.com/video/2023/03/27/158366-816591693_large.mp4";
+
+        // Title bounce on click
+        document.getElementById('valk-title').addEventListener('click', function() {
+            this.style.transition = 'transform 0.3s cubic-bezier(.68,-0.55,.27,1.55)';
+            this.style.transform = 'scale(1.18) rotate(-6deg)';
+            setTimeout(() => {
+                this.style.transform = '';
+            }, 300);
+        });
+
+        // Responsive canvas
+        const starfield = document.getElementById('starfield');
+        const sctx = starfield.getContext('2d');
+        const glitchCanvas = document.getElementById('glitch-canvas');
+        const gctx = glitchCanvas.getContext('2d');
+        let w = window.innerWidth, h = window.innerHeight;
+        function resize() {
+            w = window.innerWidth;
+            h = window.innerHeight;
+            starfield.width = w;
+            starfield.height = h;
+            glitchCanvas.width = w;
+            glitchCanvas.height = h;
+        }
+        window.addEventListener('resize', resize);
+
+        // Starfield
+        let stars = [];
+        function createStars() {
+            stars = [];
+            let count = Math.floor(w * h / 1800);
+            for (let i = 0; i < count; i++) {
+                stars.push({
+                    x: Math.random() * w,
+                    y: Math.random() * h,
+                    r: Math.random() * 0.8 + 0.2,
+                    a: Math.random() * 0.7 + 0.3
+                });
+            }
+        }
+        function drawStars() {
+            sctx.clearRect(0, 0, w, h);
+            for (let s of stars) {
+                sctx.beginPath();
+                sctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+                sctx.fillStyle = `rgba(255,255,255,${s.a})`;
+                sctx.fill();
+            }
+        }
+
+        resize();
+        createStars();
+
+        // Glitch shapes (right side)
+        function getGlitchArea() {
+            return {
+                x: w * 0.55,
+                y: 0,
+                width: w * 0.45,
+                height: h
+            };
+        }
+        function drawGlitch() {
+            gctx.clearRect(0, 0, w, h);
+            let area = getGlitchArea();
+            let glitchCount = 18 + Math.floor(Math.sin(Date.now()/500)*6);
+            for (let i = 0; i < glitchCount; i++) {
+                let gx = area.x + Math.random() * area.width * 0.95;
+                let gy = Math.random() * h;
+                let gw = 60 + Math.random() * 120;
+                let gh = 2 + Math.random() * 12;
+                let alpha = 0.18 + Math.random() * 0.22;
+                let shift = Math.sin(Date.now()/500 + i*2.1) * 18 + Math.random()*8;
+                gctx.save();
+                gctx.globalAlpha = alpha;
+                gctx.filter = `blur(${Math.random()*2.5}px)`;
+                gctx.fillStyle = i%2===0 ? "#fff" : "#000";
+                gctx.fillRect(gx + shift, gy, gw, gh);
+                gctx.restore();
+
+                // Add some "scanline" effect
+                if (Math.random() > 0.8) {
+                    gctx.save();
+                    gctx.globalAlpha = 0.09 + Math.random()*0.09;
+                    gctx.fillStyle = "#fff";
+                    gctx.fillRect(area.x, gy, area.width, 1);
+                    gctx.restore();
+                }
+            }
+            // Occasional vertical glitch bars
+            if (Math.random() > 0.7) {
+                let vx = area.x + Math.random() * area.width;
+                let vw = 2 + Math.random() * 7;
+                gctx.save();
+                gctx.globalAlpha = 0.13 + Math.random()*0.13;
+                gctx.filter = `blur(${Math.random()*2.5}px)`;
+                gctx.fillStyle = "#fff";
+                gctx.fillRect(vx, 0, vw, h);
+                gctx.restore();
+            }
+            // "Space" dots
+            for (let i = 0; i < 30; i++) {
+                let sx = area.x + Math.random() * area.width;
+                let sy = Math.random() * h;
+                let sr = Math.random() * 1.7 + 0.2;
+                gctx.save();
+                gctx.globalAlpha = 0.12 + Math.random()*0.13;
+                gctx.fillStyle = "#fff";
+                gctx.beginPath();
+                gctx.arc(sx, sy, sr, 0, Math.PI*2);
+                gctx.fill();
+                gctx.restore();
+            }
+        }
+
+        function animate() {
+            drawGlitch();
+            requestAnimationFrame(animate);
+        }
+
+        // Starfield animation (slow drift)
+        function animateStars() {
+            for (let s of stars) {
+                s.x += 0.01 * (Math.random()-0.5);
+                s.y += 0.01 * (Math.random()-0.5);
+                if (s.x < 0) s.x = w;
+                if (s.x > w) s.x = 0;
+                if (s.y < 0) s.y = h;
+                if (s.y > h) s.y = 0;
+            }
+            drawStars();
+            requestAnimationFrame(animateStars);
+        }
+
+        window.addEventListener('resize', () => {
+            resize();
+            createStars();
+            drawStars();
+        });
+
+        animate();
+        animateStars();
+
+        // Scroll effect: show big "valk" when scrolling down
+        const scrollValk = document.getElementById('scroll-valk');
+        let ticking = false;
+        function handleScroll() {
+            if (window.scrollY > 60) {
+                scrollValk.classList.add('visible');
+            } else {
+                scrollValk.classList.remove('visible');
+            }
+        }
+        window.addEventListener('scroll', () => {
+            if (!ticking) {
+                window.requestAnimationFrame(() => {
+                    handleScroll();
+                    ticking = false;
+                });
+                ticking = true;
+            }
+        });
+
+        // Optional: Animate the big valk on show
+        let lastVisible = false;
+        function animateScrollValk() {
+            const text = document.getElementById('scroll-valk-text');
+            const visible = scrollValk.classList.contains('visible');
+            if (visible && !lastVisible) {
+                text.style.transform = 'scale(1.12) rotate(-2deg)';
+                setTimeout(() => {
+                    text.style.transform = 'scale(1) rotate(-2deg)';
+                }, 400);
+            }
+            lastVisible = visible;
+            requestAnimationFrame(animateScrollValk);
+        }
+        animateScrollValk();
+    </script>
+</body>
+</html>
